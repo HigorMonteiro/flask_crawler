@@ -3,11 +3,12 @@ import scrapy
 from pip._vendor.urllib3 import response
 from urllib.parse import urljoin
 
+
 class HalcaSpider(scrapy.Spider):
 
     name = 'halca'
     allowed_domains = ['halcaimobiliaria.com.br']
-    start_urls = ['http://halcaimobiliaria.com.br/alugar',]
+    start_urls = ['http://halcaimobiliaria.com.br/alugar']
 
     def parse(self, response):
         items = response.xpath('//div[contains(@class, "bloco-imovel")]')
@@ -17,7 +18,7 @@ class HalcaSpider(scrapy.Spider):
             for i in urls:
                 yield scrapy.Request(
                     urljoin('http://halcaimobiliaria.com.br/',
-                            i[1:]),callback=self.parse_detail
+                            i[1:]), callback=self.parse_detail
                 )
         next_page = response.xpath(
             '/html/body/section/div[2]/div[5]/div/nav/ul/li[15]/a/@href'
@@ -26,7 +27,7 @@ class HalcaSpider(scrapy.Spider):
             self.log('Próxima página: {}'.format(next_page.extract_first()))
             yield scrapy.Request(
                 urljoin('http://halcaimobiliaria.com.br/alugar',
-                        next_page.extract_first()),callback=self.parse)
+                        next_page.extract_first()), callback=self.parse)
 
     def parse_detail(self, response):
         title = response.xpath(
