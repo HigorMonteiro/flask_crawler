@@ -1,11 +1,45 @@
 # -*- coding: utf-8 -*-
 import scrapy
-
+from pip._vendor.urllib3 import response
+from urllib.parse import urljoin
 
 class HalcaSpider(scrapy.Spider):
+
     name = 'halca'
-    allowed_domains = ['https://halcaimobiliaria.com.br/alugar']
-    start_urls = ['http://https://halcaimobiliaria.com.br/alugar/']
+    allowed_domains = ['halcaimobiliaria.com.br']
+    start_urls = ['http://halcaimobiliaria.com.br/alugar',]
 
     def parse(self, response):
-        pass
+        items = response.xpath('//div[contains(@class, "bloco-imovel")]')
+        for item in items:
+            urls = []
+            urls.append(item.xpath('./a/@href').extract_first())
+            for i in urls:
+                yield scrapy.Request(
+                    urljoin('http://halcaimobiliaria.com.br/',
+                            i[1:]),callback=self.parse_detail
+                )
+
+    def parse_detail(self, response):
+        title = response.xpath(
+            """//h1[contains(@class, "titulo")]//text()"""
+        ).extract_first()
+        address = response.xpath(
+            """//div[contains(@class, "bloco")]
+            /div[contains(@class, "resumo")]/p//text()"""
+        ).extract_first()
+        value = response.xpath(
+            """//div[contains(@class, "bloco")]
+            /div[contains(@class, "valor")]//text()"""
+        ).extract_first()
+        characteristics = response.xpath(
+            """
+            //div[contains(@class, "caracteristicas")]/p//text()"""
+        ).extract_first()
+        yield {
+            'category': 'Aluguel',
+            'title': title,
+            'address': address,
+            'value': value.strip('\n R$ \n'),
+            'characteristics': characteristics,
+        }
