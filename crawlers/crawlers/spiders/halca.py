@@ -19,6 +19,14 @@ class HalcaSpider(scrapy.Spider):
                     urljoin('http://halcaimobiliaria.com.br/',
                             i[1:]),callback=self.parse_detail
                 )
+        next_page = response.xpath(
+            '/html/body/section/div[2]/div[5]/div/nav/ul/li[15]/a/@href'
+        )
+        if next_page:
+            self.log('Próxima página: {}'.format(next_page.extract_first()))
+            yield scrapy.Request(
+                urljoin('http://halcaimobiliaria.com.br/alugar',
+                        next_page.extract_first()),callback=self.parse)
 
     def parse_detail(self, response):
         title = response.xpath(
